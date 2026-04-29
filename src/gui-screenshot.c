@@ -152,7 +152,7 @@ static void write_setting (const char *option)
     if (!check || !gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (check))) return;
 
     fname = g_build_filename (g_get_user_config_dir (), "gui-screenshot", "config", NULL);
-    dir = g_path_get_dirname (path);
+    dir = g_path_get_dirname (fname);
     g_mkdir_with_parents (dir, S_IRUSR | S_IWUSR | S_IXUSR);
     g_free (dir);
 
