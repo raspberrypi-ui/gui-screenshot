@@ -1,5 +1,5 @@
-/*
-Copyright (c) 2018 Raspberry Pi (Trading) Ltd.
+/*============================================================================
+Copyright (c) 2026 Raspberry Pi
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+============================================================================*/
 
 #define _GNU_SOURCE
 #include <string.h>
@@ -38,9 +38,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
-#include <gdk/gdkx.h>
 
-/* Controls */
+/*----------------------------------------------------------------------------*/
+/* Global variables                                                           */
+/*----------------------------------------------------------------------------*/
 
 static GtkWidget *msg_dlg, *copy_btn, *open_btn, *quit_btn, *check;
 
@@ -48,6 +49,18 @@ static char g_filepath[PATH_MAX];
 
 /*----------------------------------------------------------------------------*/
 /* Prototypes                                                                 */
+/*----------------------------------------------------------------------------*/
+
+static void build_filepath (void);
+static int run_cmd (char *const argv[], char **stdout_buf, size_t *stdout_len);
+static void write_setting (const char *option);
+static gboolean open (GtkButton *button, gpointer data);
+static gboolean copy (GtkButton *button, gpointer data);
+static gboolean quit (GtkButton *button, gpointer data);
+static gboolean key_press_event (GtkWidget *widget, GdkEventKey *event, gpointer data);
+
+/*----------------------------------------------------------------------------*/
+/* Function definitions                                                       */
 /*----------------------------------------------------------------------------*/
 
 /* ── helpers ─────────────────────────────────────────────────────── */
@@ -129,30 +142,31 @@ static int run_cmd(char *const argv[], char **stdout_buf, size_t *stdout_len)
     return -1;
 }
 
-/* ── notification action callbacks ──────────────────────────────── */
+/* Store user choice in ~/.config/gui-screenshot/config */
 
-void check_directory (const char *path)
-{
-    char *dir = g_path_get_dirname (path);
-    g_mkdir_with_parents (dir, S_IRUSR | S_IWUSR | S_IXUSR);
-    g_free (dir);
-}
-
-void write_setting (char *option)
+static void write_setting (const char *option)
 {
     FILE *fp;
-    char *fname;
+    char *fname, *dir;
 
     if (!check || !gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (check))) return;
+
     fname = g_build_filename (g_get_user_config_dir (), "gui-screenshot", "config", NULL);
-    check_directory (fname);
+    dir = g_path_get_dirname (path);
+    g_mkdir_with_parents (dir, S_IRUSR | S_IWUSR | S_IXUSR);
+    g_free (dir);
+
     fp = fopen (fname, "wb");
     if (fp)
     {
         fprintf (fp, "%s", option);
         fclose (fp);
     }
+
+    g_free (fname);
 }
+
+/* Button handlers */
 
 static gboolean open (GtkButton *button, gpointer data)
 {
@@ -200,14 +214,17 @@ static gboolean key_press_event (GtkWidget *widget, GdkEventKey *event, gpointer
     return FALSE;
 }
 
-
 /*----------------------------------------------------------------------------*/
 /* Main window                                                                */
 /*----------------------------------------------------------------------------*/
 
 int main (int argc, char *argv[])
 {
-    int area_mode = (argc > 1 && strcmp(argv[1], "area") == 0);
+    GtkBuilder *builder;
+    char *fname, buf[16];
+    FILE *fp;
+
+    int area_mode = (argc > 1 && strcmp (argv[1], "-a") == 0);
 
     build_filepath();
 
@@ -243,10 +260,6 @@ int main (int argc, char *argv[])
         fprintf(stderr, "rpd-screenshot: capture produced no output\n");
         return 1;
     }    
-    
-    GtkBuilder *builder;
-    char *fname, buf[16];
-    FILE *fp;
     
     setlocale (LC_ALL, "");
     bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
@@ -284,6 +297,8 @@ int main (int argc, char *argv[])
     g_signal_connect (open_btn, "clicked", G_CALLBACK (open), NULL);
     g_signal_connect (quit_btn, "clicked", G_CALLBACK (quit), NULL);
     g_signal_connect (msg_dlg, "key-press-event", G_CALLBACK (key_press_event), NULL);
+
+    gtk_window_set_title (GTK_WINDOW (msg_dlg), _("Screenshot"));
 
     gtk_widget_show (msg_dlg);
 
