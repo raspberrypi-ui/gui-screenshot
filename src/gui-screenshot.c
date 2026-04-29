@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <locale.h>
 #include <libintl.h>
+#include <getopt.h>
 #include <sys/wait.h>
 
 #include <glib.h>
@@ -46,6 +47,31 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static GtkWidget *msg_dlg, *copy_btn, *open_btn, *quit_btn, *check;
 
 static char g_filepath[PATH_MAX];
+
+const char opts[] = "achfpv";
+
+const struct option long_opts[] =
+{
+    { "area", 0, NULL, 'a' },
+    { "copy", 0, NULL, 'c' },
+    { "help", 0, NULL, 'h' },
+    { "file", 0, NULL, 'f' },
+    { "prompt", 0, NULL, 'p' },
+    { "view", 0, NULL, 'v' }
+};
+
+const char helptext[] = {
+    "Usage:\n"
+    "gui-screenshot [OPTIONS]\n"
+    "\n"
+    "Options:\n"
+    "  -a, --area       Area mode - use mouse to select area to be captured\n"
+    "  -f, --file       Save captured image to file in ~/Pictures only\n"
+    "  -v, --view       Open captured image file in default image viewer\n"
+    "  -c, --copy       Copy captured image to clipboard as well as saving to file\n"
+    "  -p, --prompt     Reset saved output option and display interactive prompt\n"
+    "  -h, --help       Show this help text\n"
+};
 
 /*----------------------------------------------------------------------------*/
 /* Prototypes                                                                 */
@@ -223,13 +249,38 @@ int main (int argc, char *argv[])
     GtkBuilder *builder;
     char *fname, buf[16];
     FILE *fp;
+    int opt;
+    gboolean area = FALSE, clip = FALSE, file = FALSE, view = FALSE, prompt = FALSE;
 
-    int area_mode = (argc > 1 && strcmp (argv[1], "-a") == 0);
+    while ((opt = getopt_long (argc, argv, opts, long_opts, NULL)) != -1)
+    {
+        switch (opt)
+        {
+            case 'a' :  area = TRUE;
+                        break;
+
+            case 'c' :  clip = TRUE;
+                        break;
+
+            case 'f' :  file = TRUE;
+                        break;
+
+            case 'v' :  view = TRUE;
+                        break;
+
+            case 'p' :  prompt = TRUE;
+                        break;
+
+            case 'h' :
+            default :   printf (helptext);
+                        exit (0);
+        }
+    }
 
     build_filepath();
 
     /* ── capture ─────────────────────────────────────────────────── */
-    if (area_mode) {
+    if (area) {
         /* slurp → get region string */
         char *region = NULL;
         size_t region_len = 0;
@@ -243,13 +294,13 @@ int main (int argc, char *argv[])
         ret = run_cmd(grim_argv, NULL, NULL);
         free(region);
         if (ret != 0) {
-            fprintf(stderr, "rpd-screenshot: grim failed\n");
+            fprintf(stderr, "gui-screenshot: grim failed\n");
             return 1;
         }
     } else {
         char *grim_argv[] = {"grim", g_filepath, NULL};
         if (run_cmd(grim_argv, NULL, NULL) != 0) {
-            fprintf(stderr, "rpd-screenshot: grim failed\n");
+            fprintf(stderr, "gui-screenshot: grim failed\n");
             return 1;
         }
     }
@@ -257,7 +308,7 @@ int main (int argc, char *argv[])
     /* ── verify file ─────────────────────────────────────────────── */
     struct stat st;
     if (stat(g_filepath, &st) < 0 || st.st_size == 0) {
-        fprintf(stderr, "rpd-screenshot: capture produced no output\n");
+        fprintf(stderr, "gui-screenshot: capture produced no output\n");
         return 1;
     }    
     
@@ -269,6 +320,7 @@ int main (int argc, char *argv[])
     check = NULL;
 
     fname = g_build_filename (g_get_user_config_dir (), "gui-screenshot", "config", NULL);
+    if (prompt) remove (fname);
     fp = fopen (fname, "rb");
     if (fp)
     {
@@ -279,6 +331,11 @@ int main (int argc, char *argv[])
         if (!strncmp (buf, "copy", 4)) copy (NULL, NULL);
         if (!strncmp (buf, "quit", 4)) quit (NULL, NULL);
     }
+    g_free (fname);
+
+    if (view) open (NULL, NULL);
+    if (file) quit (NULL, NULL);
+    if (clip) copy (NULL, NULL);
 
     g_set_prgname ("wf-panel-pi");
     gtk_init (&argc, &argv);
