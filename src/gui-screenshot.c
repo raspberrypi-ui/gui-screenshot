@@ -44,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* Global variables                                                           */
 /*----------------------------------------------------------------------------*/
 
-static GtkWidget *msg_dlg, *copy_btn, *open_btn, *quit_btn, *check;
+static GObject *msg_dlg, *copy_btn, *open_btn, *quit_btn, *check;
 
 static char g_filepath[PATH_MAX];
 
@@ -342,11 +342,11 @@ int main (int argc, char *argv[])
 
     builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/gui-screenshot.ui");
 
-    msg_dlg = (GtkWidget *) gtk_builder_get_object (builder, "modal");
-    copy_btn = (GtkWidget *) gtk_builder_get_object (builder, "btn_copy");
-    open_btn = (GtkWidget *) gtk_builder_get_object (builder, "btn_open");
-    quit_btn = (GtkWidget *) gtk_builder_get_object (builder, "btn_cancel");
-    check = (GtkWidget *) gtk_builder_get_object (builder, "check_remember");
+    msg_dlg = gtk_builder_get_object (builder, "modal");
+    copy_btn = gtk_builder_get_object (builder, "btn_copy");
+    open_btn = gtk_builder_get_object (builder, "btn_open");
+    quit_btn = gtk_builder_get_object (builder, "btn_cancel");
+    check = gtk_builder_get_object (builder, "check_remember");
 
     g_object_unref (builder);
 
@@ -357,7 +357,7 @@ int main (int argc, char *argv[])
 
     gtk_window_set_title (GTK_WINDOW (msg_dlg), _("Screenshot"));
 
-    gtk_widget_show (msg_dlg);
+    gtk_widget_show (GTK_WIDGET (msg_dlg));
 
     gtk_main ();
 
