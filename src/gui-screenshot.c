@@ -38,7 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* Global variables                                                           */
 /*----------------------------------------------------------------------------*/
 
-static GObject *msg_dlg, *copy_btn, *open_btn, *quit_btn, *check;
+static GObject *msg_dlg, *copy_btn, *open_btn, *quit_btn, *check, *msg;
 
 static char g_filepath[PATH_MAX];
 
@@ -46,12 +46,12 @@ static const char opts[] = "achfpv";
 
 static const struct option long_opts[] =
 {
-    { "area", 0, NULL, 'a' },
-    { "copy", 0, NULL, 'c' },
-    { "help", 0, NULL, 'h' },
-    { "file", 0, NULL, 'f' },
+    { "area",   0, NULL, 'a' },
+    { "copy",   0, NULL, 'c' },
+    { "help",   0, NULL, 'h' },
+    { "file",   0, NULL, 'f' },
     { "prompt", 0, NULL, 'p' },
-    { "view", 0, NULL, 'v' }
+    { "view",   0, NULL, 'v' }
 };
 
 static const char helptext[] = {
@@ -241,7 +241,7 @@ static gboolean key_press_event (GtkWidget *widget, GdkEventKey *event, gpointer
 int main (int argc, char *argv[])
 {
     GtkBuilder *builder;
-    char *fname, buf[16];
+    char *caption, *fname, buf[16];
     FILE *fp;
     int opt;
     gboolean area = FALSE, clip = FALSE, file = FALSE, view = FALSE, prompt = FALSE;
@@ -275,6 +275,7 @@ int main (int argc, char *argv[])
     {
         printf ("gui-screenshot: only one of -c, -f or -v can be specified\n");
         printf (helptext);
+        exit (0);
     }
 
     build_filepath();
@@ -343,6 +344,7 @@ int main (int argc, char *argv[])
     builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/gui-screenshot.ui");
 
     msg_dlg = gtk_builder_get_object (builder, "modal");
+    msg = gtk_builder_get_object (builder, "msg");
     copy_btn = gtk_builder_get_object (builder, "btn_copy");
     open_btn = gtk_builder_get_object (builder, "btn_open");
     quit_btn = gtk_builder_get_object (builder, "btn_cancel");
@@ -356,6 +358,11 @@ int main (int argc, char *argv[])
     g_signal_connect (msg_dlg, "key-press-event", G_CALLBACK (key_press_event), NULL);
 
     gtk_window_set_title (GTK_WINDOW (msg_dlg), _("Screenshot"));
+    fname = g_path_get_basename (g_filepath);
+    caption = g_strdup_printf ("Screenshot captured as ~/Pictures/%s", fname);
+    gtk_label_set_text (GTK_LABEL (msg), caption);
+    g_free (caption);
+    g_free (fname);
 
     gtk_widget_show (GTK_WIDGET (msg_dlg));
 
