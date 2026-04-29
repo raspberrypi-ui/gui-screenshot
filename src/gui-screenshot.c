@@ -25,17 +25,11 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ============================================================================*/
 
-#define _GNU_SOURCE
-#include <string.h>
-#include <math.h>
-#include <ctype.h>
-#include <stdlib.h>
 #include <locale.h>
 #include <libintl.h>
 #include <getopt.h>
 #include <sys/wait.h>
 
-#include <glib.h>
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
@@ -48,9 +42,9 @@ static GObject *msg_dlg, *copy_btn, *open_btn, *quit_btn, *check;
 
 static char g_filepath[PATH_MAX];
 
-const char opts[] = "achfpv";
+static const char opts[] = "achfpv";
 
-const struct option long_opts[] =
+static const struct option long_opts[] =
 {
     { "area", 0, NULL, 'a' },
     { "copy", 0, NULL, 'c' },
@@ -60,7 +54,7 @@ const struct option long_opts[] =
     { "view", 0, NULL, 'v' }
 };
 
-const char helptext[] = {
+static const char helptext[] = {
     "Usage:\n"
     "gui-screenshot [OPTIONS]\n"
     "\n"
@@ -277,6 +271,12 @@ int main (int argc, char *argv[])
         }
     }
 
+    if (clip + file + view > 1)
+    {
+        printf ("gui-screenshot: only one of -c, -f or -v can be specified\n");
+        printf (helptext);
+    }
+
     build_filepath();
 
     /* ── capture ─────────────────────────────────────────────────── */
@@ -334,8 +334,8 @@ int main (int argc, char *argv[])
     g_free (fname);
 
     if (view) open (NULL, NULL);
-    if (file) quit (NULL, NULL);
     if (clip) copy (NULL, NULL);
+    if (file) quit (NULL, NULL);
 
     g_set_prgname ("wf-panel-pi");
     gtk_init (&argc, &argv);
