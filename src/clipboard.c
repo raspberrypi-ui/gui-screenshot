@@ -1,4 +1,3 @@
-#include "clipboard.h"
 #include "wlr-data-control-unstable-v1-client-protocol.h"
 
 #include <errno.h>
