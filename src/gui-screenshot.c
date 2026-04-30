@@ -359,7 +359,7 @@ int main (int argc, char *argv[])
 
     gtk_window_set_title (GTK_WINDOW (msg_dlg), _("Screenshot"));
     fname = g_path_get_basename (g_filepath);
-    caption = g_strdup_printf ("Screenshot captured as ~/Pictures/%s", fname);
+    caption = g_strdup_printf (_("Screenshot captured as ~/Pictures/%s"), fname);
     gtk_label_set_text (GTK_LABEL (msg), caption);
     g_free (caption);
     g_free (fname);
