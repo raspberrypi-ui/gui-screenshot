@@ -271,9 +271,9 @@ int main (int argc, char *argv[])
         }
     }
 
-    if (clip + file + view > 1)
+    if (clip + file + view + prompt > 1)
     {
-        printf ("gui-screenshot: only one of -c, -f or -v can be specified\n");
+        printf ("gui-screenshot: only one of -c, -f, -p or -v can be specified\n");
         printf (helptext);
         exit (0);
     }
