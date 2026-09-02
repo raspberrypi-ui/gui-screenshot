@@ -1,3 +1,9 @@
+gui-screenshot (0.2) trixie; urgency=medium
+
+  * Version bump for build
+
+ -- Simon Long <simon@raspberrypi.com>  Wed, 02 Sep 2026 14:39:03 +0100
+
 gui-screenshot (0.1) trixie; urgency=medium
 
   * Initial release
